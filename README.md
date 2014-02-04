@@ -1,55 +1,22 @@
-# Level 0
+Solution for stripe ctf-3 level0
+================================
 
-## Usage
+The perfect has was generated using a generic perfect hash generator in python:
 
-To submit your code, first commit, and then run `git push`.
+http://ilan.schnell-web.net/prog/perfect-hash/
 
-Only the program input will vary; we'll always run against the same
-dictionary (`test/harness` will download that dictionary for you if
-you don't have it).
+While the hash generation was significantly slower than mph:
 
-See https://stripe-ctf.com for context on this level.
+http://www.ibiblio.org/pub/Linux/devel/lang/c/mph-1.2.tar.gz
 
-## Observations
+the resulting hash was a bit faster.
 
-It's hard to know what this script does, but it seems to take time
-depending on the size of the input:
+I unrolled the hash function to calculate the hash as I walk through the buffer.
 
-    $ time ./level0 < short.txt >/dev/null
+My testing showed that directly using syscall read/write to/from buffers had the best performance, and I/O seems to be the greatest limiting factor.
 
-    real  0m1.231s
-    user  0m1.132s
-    sys   0m0.096s
+Note that this fails on a small percentage of the test input because it can't handle backslashes. Adding an additional check for valid characters would have slowed down the loop. Fortunately only about 1/1000 of the testing samples contained a backslash so the failure rate was minimal
 
-Compare to:
+The testing framework was extremely inconsistent. I saw scores between 1000 and 4000 for my final solution. I ran it a lot to have the best chance of getting a high score  and managed to get into a tie for 10th on the leaderboard:
 
-    $ time ./level0 < long.txt >/dev/null
-
-    real  0m14.060s
-    user  0m12.952s
-    sys   0m1.104s
-
-`wc -c` shows that long.txt is about 10 times larger than short.txt,
-so it seems like the runtime grows linearly with input size. Since it
-also has to read the entire input, there's not going to be a way to do
-better than a linear-time solution.
-
-## Catalog
-
-- `build.sh`: We'll run this file before trying to run your code. This
-  is likely only relevant if you rewrite in another language, but it
-  also could be useful for something like fetching dependencies via
-  Bundler. Feel free to modify it arbitarily; we'll run the modified
-  version on our build servers. (https://stripe-ctf.com/about#build
-  has more information on the build process.)
-
-- `level0`: The mysterious program. Why so slow?
-
-- `long.txt`: An example long input file.
-
-- `short.txt`: An example short input file.
-
-- `README.md`: This file :).
-
-- `test/*`: A framework to make it easy for you to run test cases
-  locally. You should only ever have to run `test/harness`.
+https://stripe-ctf.com/leaderboard/0
